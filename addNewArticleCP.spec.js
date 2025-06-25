@@ -2,172 +2,231 @@
 const { Builder, By, Key, until } = require('selenium-webdriver')
 const assert = require('assert')
 
-describe('Article', function() {
-  this.timeout(30000)
-  let driver
-  let vars
-  beforeEach(async function() {
-    driver = await new Builder().forBrowser('chrome').build()
-    vars = {}
-  })
-  afterEach(async function() {
-    await driver.quit();
-  })
-  it('Article', async function() {
-    // 1. Navigate to login page
-    await driver.get("https://admin.stage.vcc.hebronsoft.com/auth/login")
-    await driver.manage().window().setRect({ width: 1440, height: 900 })
+describe('Article', function () {
+    this.timeout(30000)
+    let driver
+    let vars
+    beforeEach(async function () {
+        driver = await new Builder().forBrowser('chrome').build()
+        vars = {}
+    })
+    afterEach(async function () {
+        await driver.quit();
+    })
+    it('Article', async function () {
+        // 1. Navigate to login page
+        await driver.get("https://admin.stage.vcc.hebronsoft.com/auth/login")
+        await driver.manage().window().setRect({ width: 1440, height: 900 })
 
-    // 2. wait for and fill login form
-    await driver.wait(until.elementLocated(By.id("login-email")), 10000, "Login email field not found")
-    await driver.findElement(By.id("login-email")).sendKeys("qwe@qwe.com")
-    await driver.findElement(By.id("login-pass")).sendKeys("qweQWE123")
-    await driver.findElement(By.id("log-btn")).click()
+        // 2. wait for and fill login form
+        await driver.wait(until.elementLocated(By.id("login-email")), 10000, "Login email field not found")
+        await driver.findElement(By.id("login-email")).sendKeys("qwe@qwe.com")
+        await driver.findElement(By.id("login-pass")).sendKeys("qweQWE123")
+        await driver.findElement(By.id("log-btn")).click()
 
-    // 3.wait for page load after login
-    await driver.wait(until.elementLocated(By.css('body')), 10000, 'Page did not load after login')
-    
-    // 4. wait for and click on Blog button
-    await driver.wait(until.elementLocated(By.xpath("//div/ul/li[5]")), 10000, "Blog button not found")
-    const blogButton = await driver.findElement(By.xpath("//div/ul/li[5]"))
-    await blogButton.click()
+        // 3.wait for navigation and click on Partners
+        await driver.wait(until.elementLocated(By.id("partners-btn")), 10000, "Partners button not found")
+        const partnersButton = await driver.findElement(By.id("partners-btn"))
+        await partnersButton.click()
 
-    // 5. wait for and click on Add new Article button
-    await driver.wait(until.elementLocated(By.xpath("//button[contains(.,'Add new article')]")), 10000, "Add new article button not found")
-    const addNewArticleButton = await driver.findElement(By.xpath("//button[contains(.,'Add new article')]"))
-    await addNewArticleButton.click()
+        // 4. Click Community Partners
+        const communityPartnersOption = await driver.wait(
+            until.elementLocated(By.xpath("//div[contains(@class, 'item-title') and text()='Community Partners']")),
+            10000
+        )
+        await communityPartnersOption.click()
 
-    // 6. Wait for the skills section to be visible and interactable
-    await driver.wait(until.elementLocated(By.css(".skill-item")), 10000, "Skills section not found")
-    
-    // 7. Add a small delay to ensure the page is fully loaded
-    await driver.sleep(2000)
-    
-    try {
-      // 8. Try to find the skill item with a more specific selector
-      const skillItem = await driver.wait(
-        until.elementLocated(By.css(".skill-item:nth-child(3)")),
-        10000,
-        'Third skill item not found'
-      )
-      
-      // 9. Log the HTML of the skill item to help debug
-      const skillItemHtml = await skillItem.getAttribute('outerHTML')
-      console.log('Skill item HTML:', skillItemHtml)
-      
-      // 10. Try to find the checkbox within the skill item
-      const checkbox = await driver.wait(
-        until.elementLocated(By.css(".skill-item:nth-child(3) .mat-pseudo-checkbox")),
-        10000,
-        'Checkbox not found within skill item'
-      )
-      
-      // 11. Click on the checkbox
-      await checkbox.click()
-    } catch (error) {
-      console.log('Error finding skill item or checkbox:', error.message)
-      // 12. Log the page source to help debug
-      const pageSource = await driver.getPageSource()
-      console.log('Page source:', pageSource)
-    }
+        // 5. Wait for filter input and filter for 'hebron'
+        await driver.wait(until.urlContains('/company/list'), 10000)
+        const nameFilterInput = await driver.wait(
+            until.elementLocated(By.css('input.p-column-filter.max-with.p-inputtext.p-component')),
+            10000
+        )
+        await nameFilterInput.clear()
+        await nameFilterInput.sendKeys('hebron')
 
-    // 13. Click on the title field
-    await driver.findElement(By.css(".m-t-8:nth-child(3) > .ng-untouched")).click()
-    await driver.findElement(By.xpath("//input[@type=\'text\']")).sendKeys("Exploring the Cosmos")
-    await driver.findElement(By.css(".m-t-8 > .ng-untouched")).click()
-    await driver.findElement(By.xpath("(//input[@type=\'text\'])[2]")).sendKeys("Carl Newton")
-    await driver.findElement(By.id("mat-select-value-1")).click()
-    await driver.findElement(By.css("#mat-option-0 > .mat-option-text")).click()
-    await driver.findElement(By.css(".ng-invalid:nth-child(1)")).click()
-    await driver.findElement(By.css("#mat-option-2 > .mat-option-text")).click()
-    await driver.findElement(By.css(".NgxEditor__Placeholder")).click()
-    {
-      const element = await driver.findElement(By.css(".ProseMirror"))
-      await driver.executeScript("if(arguments[0].contentEditable === 'true') {arguments[0].innerText = 'The universe holds countless mysteries. From black holes to dark matter, space continues to captivate scientists and dreamers alike.\\n'}", element)
-    }
-    await driver.findElement(By.id("mat-chip-list-input-0")).click()
-    
-    // 14. Type "Network – Monthly" into the input field using the correct selector and select from dropdown
-    try {
-      // 15. Wait for the input field to be present and interactable
-      const tagInput = await driver.wait(
-        until.elementLocated(By.css("input[formcontrolname='tagsCtrl']")),
-        10000,
-        'Tag input field not found'
-      )
+        // 6. Wait for HEBRON row and click it
+        const hebronRow = await driver.wait(
+            until.elementLocated(By.xpath("//div[contains(@class, 'pointable') and contains(translate(normalize-space(text()), 'abcdefghijklmnopqrstuvwxyz', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 'HEBRON')]")),
+            10000
+        )
+        await driver.wait(until.elementIsVisible(hebronRow), 10000)
+        await hebronRow.click()
 
-      // 16. Highlight the field for debugging
-      await driver.executeScript("arguments[0].style.border='3px solid red'", tagInput)
+        // 7. Click the " 7. Spread the Word " tab
+        const requestGoodsTab = await driver.wait(
+            until.elementLocated(By.xpath("//a[contains(@class, 'body-2') and contains(normalize-space(text()), '7. Spread the Word')]")),
+            10000
+        )
+        await driver.wait(until.elementIsVisible(requestGoodsTab), 10000)
+        await requestGoodsTab.click()
 
-      // 17. Type the tag
-      await tagInput.sendKeys("Network – Monthly")
+        // 8. wait for and click on Add new Article button
+        await driver.wait(until.elementLocated(By.xpath("//button[contains(.,'Add new article')]")), 10000, "Add new article button not found")
+        const addNewArticleButton = await driver.findElement(By.xpath("//button[contains(.,'Add new article')]"))
+        await addNewArticleButton.click()
 
-      // 18. Wait for the autocomplete dropdown to appear
-      const suggestion = await driver.wait(
-        until.elementLocated(By.xpath("//mat-option//span[contains(text(), 'Network – Monthly')]")),
-        5000,
-        "Tag suggestion not found"
-      )
+        // 9. Handle new tab that opens
+        await driver.wait(async () => {
+            const handles = await driver.getAllWindowHandles();
+            return handles.length > 1;
+        }, 10000, "New tab did not open");
 
-      // 19. Click the suggestion to select it
-      await suggestion.click()
+        const handles = await driver.getAllWindowHandles();
+        await driver.switchTo().window(handles[handles.length - 1]);
 
-      // 20. Wait a moment for the chip to be created
-      await driver.sleep(1000)
-    } catch (error) {
-      console.log('Error entering Network Monthly text:', error.message)
-      // 21. Log the page source to help debug
-      const pageSource = await driver.getPageSource()
-      console.log('Page source after error:', pageSource)
-    }
-    
-    await driver.findElement(By.id("save-section-btn")).click()
-    
-    // 22. Wait for and find the toast notification
-    try {
-      // 23. First wait for any toast to be present
-      await driver.wait(until.elementLocated(By.css(".toast-container")), 10000, "Toast container not found")
-      
-      // 24. Log the page source to see the toast structure
-      const pageSource = await driver.getPageSource()
-      console.log('Page source after save:', pageSource)
-      
-      // 25. Try to find the toast title with a more specific selector
-      const toastTitle = await driver.wait(
-        until.elementLocated(By.css(".toast-container .toast-title")),
-        10000,
-        'Toast title not found'
-      )
-      
-      // 26. Log the found element's HTML
-      const elementHtml = await toastTitle.getAttribute('outerHTML')
-      console.log('Found toast title element:', elementHtml)
-      
-      await toastTitle.click()
-    } catch (error) {
-      console.log('Error finding toast notification:', error.message)
-      // 27. Log the page source to help debug
-      const pageSource = await driver.getPageSource()
-      console.log('Page source after error:', pageSource)
-    }
-// 28. Wait for table to be present
-await driver.wait(
-  until.elementLocated(By.css("p-table")),
-  10000,
-  "Table not found"
-)
+        // 10. Wait for the new page to load with the expected URL
+        await driver.wait(until.urlContains('/blog/create'), 10000, "New tab did not load the expected URL");
+        await driver.wait(until.urlContains('partnersId='), 10000, "URL does not contain partnersId parameter");
 
-// 29. Wait for the new Article to appear in the table
-const articleCell = await driver.wait(
-  until.elementLocated(By.xpath("//div[contains(@class, 'body-1') and text()=' Exploring the Cosmos ']")),
-  10000,
-  "New Article not found in table"
-)
+        // 11.Wait for page to fully load
+        await driver.sleep(2000);
 
-// 30. Assert that the row exists
-assert.ok(articleCell, "Row with new Article should exist")
+        // 12. Click on the title field// await driver.findElement(By.css(".m-t-8:nth-child(3) > .ng-untouched")).click()
+        await driver.findElement(By.xpath("//input[@type=\'text\']")).sendKeys("Remote Work Best Practices")
+        
+        await driver.findElement(By.xpath("(//input[@type=\'text\'])[2]")).sendKeys("Olivia Park")
+        
+        {
+            const element = await driver.findElement(By.css(".ProseMirror"))
+            await driver.executeScript("if(arguments[0].contentEditable === 'true') {arguments[0].innerText = 'Working remotely requires discipline and structure. Setting clear boundaries, routines, and goals can help maintain work-life balance.\\n'}", element)
+        }
 
-await driver.close()
+        // 13. Select 'Ongoing' from the Type dropdown using JavaScript click
+        const typeDropdown = await driver.findElement(By.css('mat-select[formcontrolname="type"]'));
+        await typeDropdown.click();
+        await driver.wait(until.elementLocated(By.css('.mat-select-panel')), 5000);
+        const ongoingOption = await driver.findElement(By.xpath("//mat-option//span[contains(text(), 'Ongoing')]"));
+        await driver.executeScript("arguments[0].click();", ongoingOption);
+        await driver.sleep(500);
 
-  })
+        // 14. Click the dropdown and wait for options panel
+        await driver.findElement(By.id("mat-select-value-1")).click()
+
+        // 15. Wait for the dropdown panel to be visible
+        await driver.wait(
+            until.elementLocated(By.css("#mat-option-0 > .mat-option-text")),
+            10000,
+            "Dropdown panel not found"
+        )
+
+        // 16. Type "Network – Monthly" into the input field using the correct selector and select from dropdown
+        try {
+            // 17. Wait for the input field to be present and interactable
+            const tagInput = await driver.wait(
+                until.elementLocated(By.css("input[formcontrolname='tagsCtrl']")),
+                10000,
+                'Tag input field not found'
+            )
+
+            // 18. Highlight the field for debugging
+            await driver.executeScript("arguments[0].style.border='3px solid red'", tagInput)
+
+            // 19. Type the tag
+            await tagInput.sendKeys("Network – Monthly")
+
+            // 20. Wait for the autocomplete dropdown to appear
+            const suggestion = await driver.wait(
+                until.elementLocated(By.xpath("//mat-option//span[contains(text(), 'Network – Monthly')]")),
+                5000,
+                "Tag suggestion not found"
+            )
+
+            // 21. Click the suggestion to select it
+            await suggestion.click()
+
+            // 22. Wait a moment for the chip to be created
+            await driver.sleep(1000)
+            
+            // 23. Ensure the dropdown is closed by pressing Escape
+            await driver.actions().sendKeys(Key.ESCAPE).perform();
+            await driver.sleep(500);
+            
+            // 24. Click outside the input to ensure focus is lost
+            await driver.actions().move({x: 0, y: 0}).click().perform();
+            await driver.sleep(500);
+        } catch (error) {
+            console.log('Error entering Network Monthly text:', error.message)
+            // 25. Log the page source to help debug
+            const pageSource = await driver.getPageSource()
+            console.log('Page source after error:', pageSource)
+        }
+
+        // 26. Close any open dropdown overlays before saving
+        try {
+            // 27. Check if there are any open overlay backdrops and close them
+            const overlayBackdrops = await driver.findElements(By.css('.cdk-overlay-backdrop'));
+            if (overlayBackdrops.length > 0) {
+                // 28. Click on the backdrop to close any open dropdowns
+                await driver.executeScript("arguments[0].click();", overlayBackdrops[0]);
+                await driver.sleep(500);
+            }
+            
+            // 29. Also try to press Escape key to close any open dropdowns
+            await driver.actions().sendKeys(Key.ESCAPE).perform();
+            await driver.sleep(500);
+        } catch (error) {
+            console.log('Error closing overlays:', error.message);
+        }
+
+        // 30. Wait for save button to be clickable
+        const saveButton = await driver.wait(
+            until.elementLocated(By.id("save-section-btn")),
+            10000,
+            "Save button not found"
+        );
+        
+        // 31. Wait for the button to be clickable
+        await driver.wait(until.elementIsEnabled(saveButton), 10000);
+        
+        // 32. Use JavaScript click to avoid overlay interception
+        await driver.executeScript("arguments[0].click();", saveButton);
+
+        // 33. Wait for and find the toast notification
+        try {
+            // 34. First wait for any toast to be present
+            await driver.wait(until.elementLocated(By.css(".toast-container")), 10000, "Toast container not found")
+
+            // 35. Log the page source to see the toast structure
+            const pageSource = await driver.getPageSource()
+            console.log('Page source after save:', pageSource)
+
+            // 36. Try to find the toast title with a more specific selector
+            const toastTitle = await driver.wait(
+                until.elementLocated(By.css(".toast-container .toast-title")),
+                10000,
+                'Toast title not found'
+            )
+
+            // 37. Log the found element's HTML
+            const elementHtml = await toastTitle.getAttribute('outerHTML')
+            console.log('Found toast title element:', elementHtml)
+
+            await toastTitle.click()
+        } catch (error) {
+            console.log('Error finding toast notification:', error.message)
+            // 38. Log the page source to help debug
+            const pageSource = await driver.getPageSource()
+            console.log('Page source after error:', pageSource)
+        }
+        // 39. Wait for table to be present
+        await driver.wait(
+            until.elementLocated(By.css("p-table")),
+            10000,
+            "Table not found"
+        )
+
+        // 40. Wait for the new Article to appear in the table
+        const articleCell = await driver.wait(
+            until.elementLocated(By.xpath("//div[contains(@class, 'body-1') and text()=' Remote Work Best Practices ']")),
+            10000,
+            "New Article not found in table"
+        )
+
+        // 41. Assert that the row exists
+        assert.ok(articleCell, "Row with new Article should exist")
+
+        await driver.close()
+
+    })
 })
